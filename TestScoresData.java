@@ -4,16 +4,18 @@ import java.util.*;
 
 public class TestScoresData{
   //maximum number of columns out of mean test scores and covariate data
-  public final static int numColumns = 33;
+  public static int numColumns = 0;
 
   public static void main (String[] args) throws FileNotFoundException {
     //sets up files and scanners
+    //this file with economic status also contains urban vs. rural data
     File econ = new File("es.csv");
     File scores = new File("ts.csv");
-    //File ru = new File("");
     Scanner sc = new Scanner(econ).useDelimiter(",");
     Scanner sc1 = new Scanner(scores).useDelimiter(",");
 
+    //sets max number of columns, to be the size of the array
+    numColumns = countColumns(sc);
     calcEconomicStatus(sc, sc1);
   }
 
@@ -28,7 +30,6 @@ public class TestScoresData{
 
     //reads in data and adds all mean test scores and proportions
     while (sc1.hasNext()){
-      //System.out.println(".");
       String currEconLine = sc.nextLine();
       String currScoresLine = sc1.nextLine();
       economicLine = currEconLine.split(",",0);
@@ -84,9 +85,21 @@ public class TestScoresData{
   aboveES = aboveES/aboveAvCounter;
   System.out.println("Below: " + belowES);
   System.out.println("Above: " + aboveES);
-
   }
-//count columns method, add 1 for number of commas
 
-
+//counts the number of columns within the file
+  public static int countColumns (Scanner sc) throws FileNotFoundException {
+    int columns = 0;
+    //takes the first line, usually the header, and counts number of commas
+    String currentLine = sc.nextLine();
+    for (int i=0; i < currentLine.length();i++){
+      //identifies all instances of a comma
+      if (currentLine.substring(i, i+1).equals(",")){
+        columns++;
+      }
+    }
+    //columns are separated by commas - need to add extra at the end
+    columns++;
+    return columns;
+  }
 }
