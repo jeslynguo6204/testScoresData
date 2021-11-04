@@ -17,6 +17,9 @@ public class TestScoresData{
     //sets max number of columns, to be the size of the array
     numColumns = countColumns(sc);
     calcEconomicStatus(sc, sc1);
+    Scanner sc2 = new Scanner(econ).useDelimiter(",");
+    Scanner sc3 = new Scanner(scores).useDelimiter(",");
+    ruralUrbanTestScores(sc2, sc3);
   }
 
   public static void calcEconomicStatus(Scanner sc, Scanner sc1) throws FileNotFoundException{
@@ -34,6 +37,7 @@ public class TestScoresData{
       String currScoresLine = sc1.nextLine();
       economicLine = currEconLine.split(",",0);
       scoresLine = currScoresLine.split(",",0);
+      //identify the index here -- change this into a method
       int scoresIndex = Arrays.asList(scoresLine).indexOf("cs_mn_avg_ol");
       int esIndex = Arrays.asList(economicLine).indexOf("perfrl");
       //System.out.println(scoresIndex);
@@ -41,11 +45,12 @@ public class TestScoresData{
 
       //catches gaps in the code
       if (scoresLine.length > 11){
-        //System.out.println("This works");
-        testScores.add(scoresLine[11]); //need to correctly get the column value here
-      }
-      if (economicLine.length > 22){
+        if (economicLine.length > 22){
+          testScores.add(scoresLine[11]); //need to correctly get the column value here
           economicStatus.add(economicLine[22]);
+        }
+        //System.out.println("This works");
+
       }
     }
     sc.close();
@@ -83,8 +88,52 @@ public class TestScoresData{
   //System.out.println(aboveES + " " + aboveAvCounter);
   belowES = belowES/belowAvCounter;
   aboveES = aboveES/aboveAvCounter;
-  System.out.println("Below: " + belowES);
-  System.out.println("Above: " + aboveES);
+  System.out.println("Below Average Test Performance, Proportion of Students who Qualify for Free or Reduced Price Lunch " + belowES*100 + "%");
+  System.out.println("Above Average Test Performance, Proportion of Students who Qualify for Free or Reduced Price Lunch " + aboveES*100 + "%");
+  }
+
+  public static void ruralUrbanTestScores(Scanner sc, Scanner sc1) throws FileNotFoundException {
+    ArrayList<String> ruralScores = new ArrayList<String>();
+    ArrayList<String> urbanScores = new ArrayList<String>();
+    double avgRural = 0.0;
+    double avgUrban = 0.0;
+
+    String[] ruralUrbanLine = new String[numColumns];
+    String[] scoresLine = new String[numColumns];
+
+
+    //reads data and determines if a given place is rural or urban
+    while (sc1.hasNext()){
+      String currRuUrLine = sc.nextLine();
+      String currScoresLine = sc1.nextLine();
+      ruralUrbanLine = currRuUrLine.split(",",0);
+      scoresLine = currScoresLine.split(",",0);
+
+      if (scoresLine.length > 11){
+        if (ruralUrbanLine.length > 22){
+          if (ruralUrbanLine[12].equals("City")){
+            urbanScores.add(scoresLine[11]);
+            //System.out.println(scoresLine[11]);
+            //System.out.println(ruralUrbanLine[12]);
+          }
+          else if (ruralUrbanLine[12].equals("Rural")){
+            ruralScores.add(scoresLine[11]);
+            //System.out.println(ruralUrbanLine[12]);
+          }
+        }
+      }
+    }
+    //calculates the average test scores for both regions
+    for (int i = 0; i < ruralScores.size();i++){
+      avgRural += Double.parseDouble(ruralScores.get(i));
+    }
+    for (int i = 0; i < urbanScores.size();i++){
+      avgUrban += Double.parseDouble(urbanScores.get(i));
+    }
+    avgRural = avgRural/ruralScores.size();
+    avgUrban = avgUrban/urbanScores.size();
+    System.out.println("Rural Average Performance: " + avgRural);
+    System.out.println("Urban Average Performance: " + avgUrban);
   }
 
 //counts the number of columns within the file
@@ -102,4 +151,6 @@ public class TestScoresData{
     columns++;
     return columns;
   }
+
+//public static int identifyColumnIndex (Scanner sc) throws FileNotFoundException
 }
