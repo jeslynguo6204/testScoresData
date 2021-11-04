@@ -5,77 +5,83 @@ import java.util.*;
 public class TestScoresData{
   //maximum number of columns out of mean test scores and covariate data
   public static int numColumns = 0;
+  //column indeces for percent students qualifying for free/reduced price lunch, average test scores, and urbanicity
+  public static int econStatusColumn = 0;
+  public static int testScoreColumn = 0;
+  public static int ruralUrbanColumn = 0;
 
   public static void main (String[] args) throws FileNotFoundException {
-    //sets up files and scanners
-    //this file with economic status also contains urban vs. rural data
-    File econ = new File("es.csv");
+    //sets up files
+    File econ = new File("es.csv"); //this file with economic status also contains urban vs. rural data
     File scores = new File("ts.csv");
+    //sets up scanners to analyze economic status and test performance
     Scanner sc = new Scanner(econ).useDelimiter(",");
     Scanner sc1 = new Scanner(scores).useDelimiter(",");
 
-    //sets max number of columns, to be the size of the array
-    numColumns = countColumns(sc);
+    //sets max number of columns in the files, to be the size of the array
+    Scanner sc2 = new Scanner(econ);
+    numColumns = countColumns(sc2);
+
+    //sets up new scanenrs to analyze rural vs. urban test performance
+    Scanner sc3 = new Scanner(econ).useDelimiter(",");
+    Scanner sc4 = new Scanner(scores).useDelimiter(",");
+
+    //scanners to be used in identify column indeces for three subcategories
+    Scanner sc5 = new Scanner(econ);
+    Scanner sc6 = new Scanner(scores);
+    Scanner sc7 = new Scanner(econ);
+    econStatusColumn = identifyColumnIndex(sc5, "perfrl");
+    testScoreColumn = identifyColumnIndex(sc6, "cs_mn_avg_ol");
+    ruralUrbanColumn = identifyColumnIndex(sc7, "urbanicity");
+
     calcEconomicStatus(sc, sc1);
-    Scanner sc2 = new Scanner(econ).useDelimiter(",");
-    Scanner sc3 = new Scanner(scores).useDelimiter(",");
-    ruralUrbanTestScores(sc2, sc3);
+    ruralUrbanTestScores(sc3, sc4);
   }
 
   public static void calcEconomicStatus(Scanner sc, Scanner sc1) throws FileNotFoundException{
     //holds the proportion of students eligible for free or reduced price lunch
     ArrayList<String> economicStatus = new ArrayList<String>();
     //holds the school mean test score against national U.S. average of 0.0
-    ArrayList<String> testScores = new ArrayList<String>();
+    ArrayList<String> testScores = new ArrayList<String>(); //parallel array to economicStatus
 
+    //array to be updated based on each line, holds data separated between commas in indeces
     String[] economicLine = new String[numColumns];
     String[] scoresLine = new String[numColumns];
 
-    //reads in data and adds all mean test scores and proportions
+    //reads in data and adds all mean test scores and proportions to arraylists
     while (sc1.hasNext()){
       String currEconLine = sc.nextLine();
       String currScoresLine = sc1.nextLine();
+      //splits current line values into an array
       economicLine = currEconLine.split(",",0);
       scoresLine = currScoresLine.split(",",0);
       //identify the index here -- change this into a method
-      int scoresIndex = Arrays.asList(scoresLine).indexOf("cs_mn_avg_ol");
-      int esIndex = Arrays.asList(economicLine).indexOf("perfrl");
-      //System.out.println(scoresIndex);
-      //System.out.println(esIndex);
+      //int scoresIndex = Arrays.asList(scoresLine).indexOf("cs_mn_avg_ol");
+      //int esIndex = Arrays.asList(economicLine).indexOf("perfrl");
 
-      //catches gaps in the code
-      if (scoresLine.length > 11){
-        if (economicLine.length > 22){
-          testScores.add(scoresLine[11]); //need to correctly get the column value here
-          economicStatus.add(economicLine[22]);
+      //ensures no blank data is taken or errors thrown
+      if (scoresLine.length > testScoreColumn){
+        if (economicLine.length > econStatusColumn){
+          testScores.add(scoresLine[testScoreColumn]);
+          economicStatus.add(economicLine[econStatusColumn]);
         }
-        //System.out.println("This works");
-
       }
     }
-    sc.close();
-/*
-    for (int i =0; i < testScores.size();i++){
-      System.out.println(testScores.get(i));
-      System.out.println(economicStatus.get(i));
-    }
-*/
-
-  //separate into negatives and positives
-  ArrayList<String> belowAverageScores = new ArrayList<>();
-  ArrayList<String> aboveAverageScores = new ArrayList<>();
+  sc.close();
+  //counter variables to get average economic status
   int belowAvCounter = 0;
   int aboveAvCounter = 0;
   double belowES = 0.0;
   double aboveES = 0.0;
 
   for (int i=1; i < testScores.size();i++){
+    //negative performance against national mean
     if (Double.parseDouble(testScores.get(i)) <0.0){
-      //System.out.println(Double.parseDouble(economicStatus.get(i)));
       belowES += Double.parseDouble(economicStatus.get(i));
-      belowAvCounter ++;
+      belowAvCounter++;
     }
     else{
+      //positive or exactly average performance against national mean
       aboveES += Double.parseDouble(economicStatus.get(i));
       aboveAvCounter++;
     }
@@ -84,8 +90,6 @@ public class TestScoresData{
     i--;
   }
 
-  //System.out.println(belowES + " " + belowAvCounter);
-  //System.out.println(aboveES + " " + aboveAvCounter);
   belowES = belowES/belowAvCounter;
   aboveES = aboveES/aboveAvCounter;
   System.out.println("Below Average Test Performance, Proportion of Students who Qualify for Free or Reduced Price Lunch " + belowES*100 + "%");
@@ -93,14 +97,15 @@ public class TestScoresData{
   }
 
   public static void ruralUrbanTestScores(Scanner sc, Scanner sc1) throws FileNotFoundException {
+    //sets up arraylists to average score performance for urban and rural schools
     ArrayList<String> ruralScores = new ArrayList<String>();
     ArrayList<String> urbanScores = new ArrayList<String>();
     double avgRural = 0.0;
     double avgUrban = 0.0;
 
+    //array to be updated based on each line, holds data separated between commas in indeces
     String[] ruralUrbanLine = new String[numColumns];
     String[] scoresLine = new String[numColumns];
-
 
     //reads data and determines if a given place is rural or urban
     while (sc1.hasNext()){
@@ -109,20 +114,19 @@ public class TestScoresData{
       ruralUrbanLine = currRuUrLine.split(",",0);
       scoresLine = currScoresLine.split(",",0);
 
-      if (scoresLine.length > 11){
-        if (ruralUrbanLine.length > 22){
-          if (ruralUrbanLine[12].equals("City")){
-            urbanScores.add(scoresLine[11]);
-            //System.out.println(scoresLine[11]);
-            //System.out.println(ruralUrbanLine[12]);
+      if (scoresLine.length > testScoreColumn){
+        if (ruralUrbanLine.length > ruralUrbanColumn){
+          if (ruralUrbanLine[ruralUrbanColumn].equals("City")){
+            urbanScores.add(scoresLine[testScoreColumn]);
           }
-          else if (ruralUrbanLine[12].equals("Rural")){
-            ruralScores.add(scoresLine[11]);
-            //System.out.println(ruralUrbanLine[12]);
+          else if (ruralUrbanLine[ruralUrbanColumn].equals("Rural")){
+            ruralScores.add(scoresLine[testScoreColumn]);
           }
         }
       }
     }
+    sc.close();
+
     //calculates the average test scores for both regions
     for (int i = 0; i < ruralScores.size();i++){
       avgRural += Double.parseDouble(ruralScores.get(i));
@@ -136,7 +140,7 @@ public class TestScoresData{
     System.out.println("Urban Average Performance: " + avgUrban);
   }
 
-//counts the number of columns within the file
+  //counts the number of columns within the file
   public static int countColumns (Scanner sc) throws FileNotFoundException {
     int columns = 0;
     //takes the first line, usually the header, and counts number of commas
@@ -152,5 +156,19 @@ public class TestScoresData{
     return columns;
   }
 
-//public static int identifyColumnIndex (Scanner sc) throws FileNotFoundException
+  //identifies the index of the column of a subcategory
+  public static int identifyColumnIndex (Scanner sc, String identifier) throws FileNotFoundException {
+    String line = sc.nextLine();
+    String[] currentLine = new String[numColumns];
+    currentLine = line.split(",",0);
+    for (int i = 0; i < currentLine.length;i++){
+      //gets the index of the column with identifier as label/header
+      if (currentLine[i].equals(identifier)){
+        return i;
+      }
+    }
+    sc.close();
+    //identifier not found in file
+    return -1;
+  }
 }
